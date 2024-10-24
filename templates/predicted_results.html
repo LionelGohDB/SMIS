@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicted Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Predicted Tahap Penguasaan Results</h1>
+
+    {% if predicted_data %}
+        <table>
+            <tr>
+                <th>Student ID</th>
+                <th>Predicted Tahap Penguasaan</th>
+            </tr>
+            {% for index in range(predicted_data['student_id']|length) %}
+                <tr>
+                    <td>{{ predicted_data['student_id'][index] }}</td>
+                    <td>{{ predicted_data['predicted_tahap_penguasaan'][index] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No predictions available.</p>
+    {% endif %}
+
+    <a href="{{ url_for('marks_prediction') }}">Go Back</a>
+</body>
+</html>

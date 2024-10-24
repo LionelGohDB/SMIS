@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marks Prediction - SMIS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for enhancing appearance */
+        body {
+            background-color: #f8f9fa;
+        }
+        h2 {
+            color: #007bff;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary, .btn-secondary, .btn-info, .btn-success {
+            margin-right: 10px;
+        }
+        .table thead th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Marks Prediction</h2>
+
+        <!-- Home button for navigation -->
+        <div class="mb-3">
+            <a href="/" class="btn btn-secondary">Home</a>
+        </div>
+
+        <!-- Form to select class and trigger the prediction -->
+        <form method="POST" action="/marks-prediction">
+            <div class="mb-3">
+                <label for="class_filter" class="form-label">Select Class for Prediction</label>
+                <select class="form-select" id="class_filter" name="selected_class">
+                    <option value="">All Classes</option>
+                    {% for class in unique_classes %}
+                        <option value="{{ class }}">{{ class }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Predict and Show buttons -->
+            <button type="submit" class="btn btn-primary">Predict</button>
+            <button type="submit" name="show_predictions" class="btn btn-info">Show Prediction Marks</button>
+        </form>
+
+        <!-- Display the predicted marks if available -->
+        {% if predictions %}
+        <h3 class="mt-4">Predicted Marks for {{ selected_class if selected_class else 'All Classes' }}
+            <small class="text-muted"> (Last updated: {{ last_update_time }})</small>
+        </h3>
+        
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Tahap Penguasaan 1</th>
+                    <th>Tahap Penguasaan 2</th>
+                    <th>Predicted Tahap Penguasaan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in predictions %}
+                <tr>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.class }}</td>
+                    <td>{{ student.tahap_penguasaan_1 }}</td>
+                    <td>{{ student.tahap_penguasaan_2 }}</td>
+                    <td>{{ student.predicted_tahap_penguasaan is not none and student.predicted_tahap_penguasaan | round(2) or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Print button for printing the predictions -->
+        <button class="btn btn-success mt-3" onclick="window.print();">Print Predictions</button>
+        {% else %}
+        <!-- Alert if no predictions available -->
+        <div class="alert alert-warning mt-3" role="alert">No student data available for prediction.</div>
+        {% endif %}
+
+        <!-- Additional home button for ease of navigation -->
+        <a href="/" class="btn btn-primary mt-3">Home</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students - SMIS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        th.sortable:hover {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Student List</h2>
+        <form method="POST" action="/students" class="mb-4">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="class_filter" class="form-label">Filter by Class</label>
+                    <select class="form-select" id="class_filter" name="class_filter">
+                        <option value="">All Classes</option>
+                        {% for class in unique_classes %}
+                            <option value="{{ class }}">{{ class }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="/" class="btn btn-secondary">Home</a>
+        </form>
+        <form method="POST" action="/download-students" class="mb-4">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="class_download_filter" class="form-label">Select Class to Download</label>
+                    <select class="form-select" id="class_download_filter" name="class_download_filter">
+                        <option value="">All Classes</option>
+                        {% for class in unique_classes %}
+                            <option value="{{ class }}">{{ class }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <button type="submit" formaction="/download-students" class="btn btn-primary">Download List</button>
+        </form>
+
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="sortTable(0)">Name</th>
+                    <th class="sortable" onclick="sortTable(1)">Class</th>
+                    <th class="sortable" onclick="sortTable(2)">Identity Number</th>
+                    <th>Tahap Penguasaan 1</th>
+                    <th>Tahap Penguasaan 2</th>
+                    <th>Update Score</th>
+                    <th>Delete Student</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody">
+                {% for student in students %}
+                    <tr>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.class }}</td>
+                        <td>{{ student.identity_number }}</td>
+                        <td>{{ student.tahap_penguasaan_1 if student.tahap_penguasaan_1 is not none else 'Not Assigned' }}</td>
+                        <td>{{ student.tahap_penguasaan_2 if student.tahap_penguasaan_2 is not none else 'Not Assigned' }}</td>
+                        <td>
+                            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#updateScoreModal" data-id="{{ student.id }}" data-name="{{ student.name }}">Update Score</button>
+                        </td>
+                        <td>
+                            <form method="POST" action="/delete-student/{{ student.id }}" style="display: inline;">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this student?');">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7">No students found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <form method="POST" action="/delete-class/{{ students[0].class if students else '' }}">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete all students in this class?');">Delete All Students in Class</button>
+        </form>
+        <a href="/" class="btn btn-primary mt-3">Home</a>
+    </div>
+
+    <!-- Update Score Modal -->
+    <div class="modal fade" id="updateScoreModal" tabindex="-1" aria-labelledby="updateScoreModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateScoreModalLabel">Update Score</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateScoreForm">
+                        <input type="hidden" id="student_id" name="student_id">
+                        <div class="mb-3">
+                            <label for="tahap_penguasaan_1" class="form-label">Tahap Penguasaan 1 (1-6)</label>
+                            <input type="number" class="form-control" id="tahap_penguasaan_1" name="tahap_penguasaan_1" min="1" max="6" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tahap_penguasaan_2" class="form-label">Tahap Penguasaan 2 (1-6)</label>
+                            <input type="number" class="form-control" id="tahap_penguasaan_2" name="tahap_penguasaan_2" min="1" max="6" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                    <div id="updateMessage" class="mt-2"></div> <!-- Feedback area -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function sortTable(columnIndex) {
+            const table = document.getElementById("studentTableBody");
+            const rows = Array.from(table.rows);
+            const sortedRows = rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent.trim();
+                const bText = b.cells[columnIndex].textContent.trim();
+
+                // Handle numerical sorting for 'Tahap Penguasaan 1' and 'Tahap Penguasaan 2'
+                if (columnIndex >= 3) {
+                    return parseInt(aText) - parseInt(bText);
+                }
+                return aText.localeCompare(bText);
+            });
+            sortedRows.forEach(row => table.appendChild(row));
+        }
+
+        const updateScoreModal = document.getElementById('updateScoreModal');
+        updateScoreModal.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            const studentId = button.getAttribute('data-id');
+            const studentName = button.getAttribute('data-name');
+            const modalTitle = updateScoreModal.querySelector('.modal-title');
+            const studentIdInput = updateScoreModal.querySelector('#student_id');
+            modalTitle.textContent = `Update Score for ${studentName}`;
+            studentIdInput.value = studentId;
+        });
+
+        document.getElementById('updateScoreForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const studentId = document.getElementById('student_id').value;
+            const tahapPenguasaan1 = document.getElementById('tahap_penguasaan_1').value;
+            const tahapPenguasaan2 = document.getElementById('tahap_penguasaan_2').value;
+
+            fetch(`/update-score/${studentId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `tahap_penguasaan_1=${tahapPenguasaan1}&tahap_penguasaan_2=${tahapPenguasaan2}`
+            }).then(function(response) {
+                if (response.ok) {
+                    document.getElementById('updateMessage').innerHTML = '<div class="alert alert-success">Score updated successfully.</div>';
+                    window.location.reload();
+                } else {
+                    document.getElementById('updateMessage').innerHTML = '<div class="alert alert-danger">Error updating score.</div>';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
