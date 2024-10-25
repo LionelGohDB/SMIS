@@ -16,6 +16,7 @@ import base64
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from datetime import datetime
+import logging
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -226,7 +227,9 @@ def delete_student(student_id):
 # Route to delete all students in a class
 @app.route('/delete-class/<student_class>', methods=['POST'])
 def delete_class(student_class):
-    check_is_logged_in()
+    if not is_logged_in():  # Check if user is logged in
+        flash('You must be logged in to access this page.', 'danger')
+        return redirect(url_for('login'))
     
     try:
         students_ref = db.collection('students').where('class', '==', student_class).stream()
@@ -241,7 +244,9 @@ def delete_class(student_class):
 # Route to download students list in a class
 @app.route('/download-students', methods=['POST'])
 def download_students():
-    check_is_logged_in()
+    if not is_logged_in():  # Check if user is logged in
+        flash('You must be logged in to access this page.', 'danger')
+        return redirect(url_for('login'))
     
     class_filter = request.form.get('class_download_filter', '')
 
@@ -576,7 +581,13 @@ def marks_prediction():
                            selected_class=selected_class,
                            last_update_time=last_update_time)
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+
+# Get the port from the environment variable or default to 8080
+port = int(os.environ.get('PORT', 8080))
+
 # Run the app
 if __name__ == '__main__':
-    #app.run(debug=True)
-    app.run(host='0.0.0.0', port=8080) #for hosting app
+    # app.run(debug=True)
+    app.run(host='0.0.0.0', port=port, debug=os.environ.get('DEBUG', 'false').lower() in ['true', '1']) #for hosting app
