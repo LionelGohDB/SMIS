@@ -584,10 +584,11 @@ def marks_prediction():
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-# Get the port from the environment variable or default to 8080
-port = int(os.environ.get('PORT', 8080))
+
 
 # Run the app
 if __name__ == '__main__':
+    # Get the port from the environment variable or default to 8080
+    port = int(os.environ.get('PORT', 8080))
     # app.run(debug=True)
     app.run(host='0.0.0.0', port=port, debug=os.environ.get('DEBUG', 'false').lower() in ['true', '1']) #for hosting app
